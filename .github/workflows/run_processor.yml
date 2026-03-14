@@ -49,5 +49,4 @@ jobs:
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
           echo "| S3 Bucket | ${{ secrets.S3_BUCKET }} |" >> $GITHUB_STEP_SUMMARY
-```
 
