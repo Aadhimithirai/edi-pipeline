@@ -51,10 +51,3 @@ jobs:
           echo "| S3 Bucket | ${{ secrets.S3_BUCKET }} |" >> $GITHUB_STEP_SUMMARY
 ```
 
----
-
-### Step 2 — Add AWS Secrets to GitHub
-```
-GitHub → Your repo → Settings
-  → Secrets and variables → Actions
-  → New repository secret
