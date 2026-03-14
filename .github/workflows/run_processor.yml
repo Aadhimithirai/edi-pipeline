@@ -1,0 +1,60 @@
+name: EDI Processor — Generate 850 EDI
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  run-processor:
+    name: Process Pending EDI Jobs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Run EDI Processor
+        run: python3 scripts/processor.py
+
+      - name: Job Summary
+        if: always()
+        run: |
+          echo "## EDI Processor Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
+          echo "| S3 Bucket | ${{ secrets.S3_BUCKET }} |" >> $GITHUB_STEP_SUMMARY
+```
+
+---
+
+### Step 2 — Add AWS Secrets to GitHub
+```
+GitHub → Your repo → Settings
+  → Secrets and variables → Actions
+  → New repository secret
