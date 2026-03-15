@@ -191,10 +191,9 @@ def process_file(s3_key: str, partners: dict) -> bool:
         # Copy to vendor inbox
         vendor_key = copy_to_vendor(s3_key, vendor_folder, file_name)
 
-        # Archive EDI file — move outbound/ → archive/YYYY/MM/
-        po_date     = file_name.split("_")[2].replace(".edi", "")  # extract date from filename
-        archive_key = archive_edi_file(s3_key, file_name, po_date)
-
+        # Store outbound path as archive reference
+        archive_key = s3_key
+        
         # Update DynamoDB
         mark_vendor_sent(file_name, vendor_key, archive_key)
 
