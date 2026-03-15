@@ -1,0 +1,67 @@
+name: Invoice Processor — Validate and Load 810
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  invoice-processor:
+    name: Process 810 Invoices — Validate, Load DynamoDB, Send Email
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Process Invoices
+        run: python3 scripts/invoice_processor.py
+
+      - name: Verify DynamoDB invoices
+        if: success()
+        run: |
+          echo "Checking invoices table..."
+          aws dynamodb scan \
+            --table-name edi-pipeline-invoices \
+            --query "Items[*].{Invoice:invoice_number.S, PO:po_number.S, Partner:partner_id.S, Total:total_amount.N, Status:payment_status.S}" \
+            --output table || true
+
+      - name: Verify archive folder
+        if: success()
+        run: |
+          echo "Checking inbound_archive..."
+          aws s3 ls s3://edi-pipeline-dev/edi/inbound_archive/ --recursive || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          echo "## Invoice Processor Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment  | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
+          echo "| DynamoDB Table | edi-pipeline-invoices |" >> $GITHUB_STEP_SUMMARY
+          echo "| Archive | s3://edi-pipeline-dev/edi/inbound_archive/ |" >> $GITHUB_STEP_SUMMARY
