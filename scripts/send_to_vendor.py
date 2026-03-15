@@ -147,12 +147,14 @@ def mark_vendor_sent(file_name: str, vendor_key: str):
         UpdateExpression = (
             "SET vendor_sent = :vs, "
             "vendor_sent_date = :vd, "
-            "s3_vendor_key = :vk" 
+            "s3_vendor_key = :vk, " 
+            "s3_archive_key = :ak"
         ),
         ExpressionAttributeValues = {
             ":vs": "Y",
             ":vd": datetime.now(timezone.utc).isoformat(),
-            ":vk": vendor_key
+            ":vk": vendor_key,
+            ":ak": archive_key
         }
     )
     log(f"DynamoDB updated → vendor_sent = Y")
