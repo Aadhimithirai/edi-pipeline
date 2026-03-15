@@ -26,6 +26,8 @@ resource "aws_s3_object" "vendor_folders" {
     "samsung/invoices/",
     "dell/inbox/",
     "dell/invoices/",
+    "hcl/inbox/",
+    "hcl/invoices/"
   ])
 
   bucket  = aws_s3_bucket.edi_vendors.bucket
@@ -41,6 +43,7 @@ resource "aws_s3_object" "vendor_folders" {
 #   edi/inbound/APPLE001/
 #   edi/inbound/SAMSUNG001/
 #   edi/inbound/DELL001/
+#   edi/inbound/HCL001/
 # ─────────────────────────────────────────────────────────
 resource "aws_s3_object" "inbound_partner_folders" {
   for_each = toset([
@@ -48,6 +51,7 @@ resource "aws_s3_object" "inbound_partner_folders" {
     "edi/inbound/APPLE001/",
     "edi/inbound/SAMSUNG001/",
     "edi/inbound/DELL001/",
+    "edi/inbound/HCL001/"
   ])
 
   bucket  = aws_s3_bucket.edi_pipeline.bucket

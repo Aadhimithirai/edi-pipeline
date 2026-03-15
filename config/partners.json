@@ -27,6 +27,13 @@
       "vendor_folder": "dell",
       "contact_email": "edi@dell.com",
       "active":        true
+    },
+    {
+      "partner_id":    "HCL001",
+      "partner_name":  "HCL Technologies",
+      "vendor_folder": "hcl",
+      "contact_email": "edi@hcl.com",
+      "active":        true
     }
   ]
 }
