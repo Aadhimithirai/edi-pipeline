@@ -12,6 +12,9 @@ on:
           - dev
           - prod
 
+  schedule:
+    - cron: '*/5 * * * *'   # runs every 5 minutes
+
 jobs:
   invoice-router:
     name: Route 810 Invoices to Inbound Folders
@@ -54,8 +57,5 @@ jobs:
           echo "## Invoice Router Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment  | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Source | s3://edi-pipeline-vendors-dev/<vendor>/invoices/ |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dest   | s3://edi-pipeline-dev/edi/inbound/PARTNER_ID/ |" >> $GITHUB_STEP_SUMMARY

@@ -12,27 +12,32 @@ on:
           - dev
           - prod
 
+  # Auto trigger after EDI Processor completes successfully
+  workflow_run:
+    workflows: ["EDI Processor — Generate 850 EDI"]
+    types:
+      - completed
+
 jobs:
   send-to-vendor:
     name: Route 850 EDI to Vendor Inboxes
     runs-on: ubuntu-latest
 
+    # Only run if EDI Processor succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
     steps:
-      # ── Step 1: Checkout code ──────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── Step 2: Setup Python ───────────────────────────
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # ── Step 3: Install dependencies ──────────────────
       - name: Install dependencies
         run: pip install boto3
 
-      # ── Step 4: Configure AWS credentials ─────────────
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -40,11 +45,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ secrets.AWS_REGION }}
 
-      # ── Step 5: Run send to vendor script ─────────────
+      # Wait 2 minutes before sending to vendor
+      - name: Wait 2 minutes
+        run: |
+          echo "Waiting 2 minutes before routing to vendor..."
+          sleep 120
+
       - name: Send EDI to Vendor Inboxes
         run: python3 scripts/send_to_vendor.py
 
-      # ── Step 6: Verify vendor folders ─────────────────
       - name: Verify vendor folders
         if: success()
         run: |
@@ -54,15 +63,11 @@ jobs:
           aws s3 ls s3://edi-pipeline-vendors-dev/samsung/inbox/ || true
           aws s3 ls s3://edi-pipeline-vendors-dev/dell/inbox/    || true
 
-      # ── Step 7: Job Summary ────────────────────────────
       - name: Job Summary
         if: always()
         run: |
           echo "## Send to Vendor Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment  | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Source       | s3://edi-pipeline-dev/edi/outbound/ |" >> $GITHUB_STEP_SUMMARY
-          echo "| Destination  | s3://edi-pipeline-vendors-dev/<vendor>/inbox/ |" >> $GITHUB_STEP_SUMMARY

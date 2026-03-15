@@ -12,10 +12,19 @@ on:
           - dev
           - prod
 
+  # Auto trigger after Invoice Router completes successfully
+  workflow_run:
+    workflows: ["Invoice Router — Route 810 to Inbound"]
+    types:
+      - completed
+
 jobs:
   invoice-processor:
     name: Process 810 Invoices — Validate, Load DynamoDB, Send Email
     runs-on: ubuntu-latest
+
+    # Only run if Invoice Router succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout repository
@@ -36,6 +45,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ secrets.AWS_REGION }}
 
+      # Wait 2 minutes before processing invoices
+      - name: Wait 2 minutes
+        run: |
+          echo "Waiting 2 minutes before processing invoices..."
+          sleep 120
+
       - name: Process Invoices
         run: python3 scripts/invoice_processor.py
 
@@ -48,11 +63,13 @@ jobs:
             --query "Items[*].{Invoice:invoice_number.S, PO:po_number.S, Partner:partner_id.S, Total:total_amount.N, Status:payment_status.S}" \
             --output table || true
 
-      - name: Verify archive folder
+      - name: Verify archive and flatfiles
         if: success()
         run: |
           echo "Checking inbound_archive..."
           aws s3 ls s3://edi-pipeline-dev/edi/inbound_archive/ --recursive || true
+          echo "Checking inbound_flatfiles..."
+          aws s3 ls s3://edi-pipeline-dev/edi/inbound_flatfiles/ --recursive || true
 
       - name: Job Summary
         if: always()
@@ -60,8 +77,8 @@ jobs:
           echo "## Invoice Processor Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment  | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
           echo "| DynamoDB Table | edi-pipeline-invoices |" >> $GITHUB_STEP_SUMMARY
           echo "| Archive | s3://edi-pipeline-dev/edi/inbound_archive/ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flat Files | s3://edi-pipeline-dev/edi/inbound_flatfiles/ |" >> $GITHUB_STEP_SUMMARY

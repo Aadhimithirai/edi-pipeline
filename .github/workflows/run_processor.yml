@@ -12,13 +12,16 @@ on:
           - dev
           - prod
 
+  schedule:
+    - cron: '*/5 * * * *'   # runs every 5 minutes
+
 jobs:
   run-processor:
     name: Process Pending EDI Jobs
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
@@ -45,8 +48,5 @@ jobs:
           echo "## EDI Processor Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
-          echo "| S3 Bucket | ${{ secrets.S3_BUCKET }} |" >> $GITHUB_STEP_SUMMARY
-
