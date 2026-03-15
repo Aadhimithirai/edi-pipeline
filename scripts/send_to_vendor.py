@@ -152,7 +152,7 @@ def mark_vendor_sent(file_name: str, vendor_key: str):
         ExpressionAttributeValues = {
             ":vs": "Y",
             ":vd": datetime.now(timezone.utc).isoformat(),
-            ":vk": vendor_key,
+            ":vk": vendor_key
         }
     )
     log(f"DynamoDB updated → vendor_sent = Y")
