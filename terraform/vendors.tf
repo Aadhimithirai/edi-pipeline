@@ -1,15 +1,11 @@
 # ─────────────────────────────────────────────────────────
 # S3 — Vendor Bucket
 #
-# Structure:
-#   tesla/inbox/       ← 850 PO copied here
-#   tesla/invoices/    ← Tesla drops 810 invoice here
-#   apple/inbox/
-#   apple/invoices/
-#   samsung/inbox/
-#   samsung/invoices/
-#   dell/inbox/
-#   dell/invoices/
+# Structure per vendor:
+#   inbox/        ← 850 PO lands here
+#   invoices/     ← 810 Invoice generated here
+#   850_archive/  ← 850 moved here after invoice generated
+#   810_archive/  ← 810 moved here after routed to pipeline
 # ─────────────────────────────────────────────────────────
 resource "aws_s3_bucket" "edi_vendors" {
   bucket = "${var.project_name}-vendors-${var.environment}"
@@ -20,14 +16,24 @@ resource "aws_s3_object" "vendor_folders" {
   for_each = toset([
     "tesla/inbox/",
     "tesla/invoices/",
+    "tesla/850_archive/",
+    "tesla/810_archive/",
     "apple/inbox/",
     "apple/invoices/",
+    "apple/850_archive/",
+    "apple/810_archive/",
     "samsung/inbox/",
     "samsung/invoices/",
+    "samsung/850_archive/",
+    "samsung/810_archive/",
     "dell/inbox/",
     "dell/invoices/",
+    "dell/850_archive/",
+    "dell/810_archive/",
     "hcl/inbox/",
-    "hcl/invoices/"
+    "hcl/invoices/",
+    "hcl/850_archive/",
+    "hcl/810_archive/",
   ])
 
   bucket  = aws_s3_bucket.edi_vendors.bucket
@@ -37,13 +43,6 @@ resource "aws_s3_object" "vendor_folders" {
 
 # ─────────────────────────────────────────────────────────
 # S3 — Inbound partner folders in pipeline bucket
-#
-# Invoices routed here by partner ID:
-#   edi/inbound/TESLA001/
-#   edi/inbound/APPLE001/
-#   edi/inbound/SAMSUNG001/
-#   edi/inbound/DELL001/
-#   edi/inbound/HCL001/
 # ─────────────────────────────────────────────────────────
 resource "aws_s3_object" "inbound_partner_folders" {
   for_each = toset([
@@ -51,7 +50,7 @@ resource "aws_s3_object" "inbound_partner_folders" {
     "edi/inbound/APPLE001/",
     "edi/inbound/SAMSUNG001/",
     "edi/inbound/DELL001/",
-    "edi/inbound/HCL001/"
+    "edi/inbound/HCL001"
   ])
 
   bucket  = aws_s3_bucket.edi_pipeline.bucket
@@ -61,24 +60,6 @@ resource "aws_s3_object" "inbound_partner_folders" {
 
 # ─────────────────────────────────────────────────────────
 # DynamoDB — Invoices Table
-#
-# Columns:
-#   invoice_number  (PK)
-#   po_number       (GSI)
-#   partner_id
-#   partner_name
-#   invoice_date
-#   due_date
-#   line_items
-#   total_amount
-#   tds_amount
-#   currency
-#   payment_status  UNPAID → PAID
-#   s3_edi_key
-#   s3_flat_key
-#   received_date
-#   paid_date
-#   error_message
 # ─────────────────────────────────────────────────────────
 resource "aws_dynamodb_table" "invoices" {
   name         = "${var.project_name}-invoices"
@@ -117,12 +98,6 @@ resource "aws_dynamodb_table" "invoices" {
 
 # ─────────────────────────────────────────────────────────
 # SNS — Invoice Notifications
-#
-# Triggers:
-#   ✅ Invoice loaded successfully → payment reminder
-#   ❌ Partner ID not found
-#   ❌ Item number mismatch
-#   ❌ TDS amount mismatch
 # ─────────────────────────────────────────────────────────
 resource "aws_sns_topic" "invoice_notifications" {
   name = "${var.project_name}-invoice-notifications"

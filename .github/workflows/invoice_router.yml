@@ -1,0 +1,61 @@
+name: Invoice Router — Route 810 to Inbound
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  invoice-router:
+    name: Route 810 Invoices to Inbound Folders
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Route Invoices to Inbound
+        run: python3 scripts/invoice_router.py
+
+      - name: Verify inbound folders
+        if: success()
+        run: |
+          echo "Checking inbound folders..."
+          aws s3 ls s3://edi-pipeline-dev/edi/inbound/TESLA001/   || true
+          aws s3 ls s3://edi-pipeline-dev/edi/inbound/APPLE001/   || true
+          aws s3 ls s3://edi-pipeline-dev/edi/inbound/SAMSUNG001/ || true
+          aws s3 ls s3://edi-pipeline-dev/edi/inbound/DELL001/    || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          echo "## Invoice Router Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment  | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Completed at | $(date) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Source | s3://edi-pipeline-vendors-dev/<vendor>/invoices/ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dest   | s3://edi-pipeline-dev/edi/inbound/PARTNER_ID/ |" >> $GITHUB_STEP_SUMMARY
