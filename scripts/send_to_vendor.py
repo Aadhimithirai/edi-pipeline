@@ -147,12 +147,14 @@ def mark_vendor_sent(file_name: str, vendor_key: str):
         UpdateExpression = (
             "SET vendor_sent = :vs, "
             "vendor_sent_date = :vd, "
-            "s3_vendor_key = :vk"
+            "s3_vendor_key = :vk, "
+            "s3_archive_key = :ak"   
         ),
         ExpressionAttributeValues = {
             ":vs": "Y",
             ":vd": datetime.now(timezone.utc).isoformat(),
             ":vk": vendor_key,
+            ":ak": archive_key,
         }
     )
     log(f"DynamoDB updated → vendor_sent = Y")
@@ -189,8 +191,12 @@ def process_file(s3_key: str, partners: dict) -> bool:
         # Copy to vendor inbox
         vendor_key = copy_to_vendor(s3_key, vendor_folder, file_name)
 
+        # Archive EDI file — move outbound/ → archive/YYYY/MM/
+        po_date     = file_name.split("_")[2].replace(".edi", "")  # extract date from filename
+        archive_key = archive_edi_file(s3_key, file_name, po_date)
+
         # Update DynamoDB
-        mark_vendor_sent(file_name, vendor_key)
+        mark_vendor_sent(file_name, vendor_key, archive_key)
 
         print(f"  └─ {file_name} ✅ SENT {'─'*23}┘")
         return True

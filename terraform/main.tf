@@ -29,6 +29,7 @@ resource "aws_s3_object" "folders" {
     "flatfiles/processed/",
     "edi/outbound/",
     "edi/cancelled/",
+    "edi/archive/",
   ])
 
   bucket  = aws_s3_bucket.edi_pipeline.bucket
