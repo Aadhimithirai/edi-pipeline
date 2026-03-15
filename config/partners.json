@@ -1,0 +1,32 @@
+{
+  "trading_partners": [
+    {
+      "partner_id":    "TESLA001",
+      "partner_name":  "Tesla Inc",
+      "vendor_folder": "tesla",
+      "contact_email": "edi@tesla.com",
+      "active":        true
+    },
+    {
+      "partner_id":    "APPLE001",
+      "partner_name":  "Apple Inc",
+      "vendor_folder": "apple",
+      "contact_email": "edi@apple.com",
+      "active":        true
+    },
+    {
+      "partner_id":    "SAMSUNG001",
+      "partner_name":  "Samsung Electronics",
+      "vendor_folder": "samsung",
+      "contact_email": "edi@samsung.com",
+      "active":        true
+    },
+    {
+      "partner_id":    "DELL001",
+      "partner_name":  "Dell Technologies",
+      "vendor_folder": "dell",
+      "contact_email": "edi@dell.com",
+      "active":        true
+    }
+  ]
+}

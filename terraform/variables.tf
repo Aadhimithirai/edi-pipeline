@@ -9,3 +9,7 @@ variable "environment" {
 variable "project_name" {
   default = "edi-pipeline"
 }
+
+variable "alert_email" {
+  default = "amithirai123@email.com"
+}

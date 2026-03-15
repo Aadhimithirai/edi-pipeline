@@ -250,6 +250,11 @@ def write_to_dynamodb(po: dict) -> bool:
             "s3_flat_file_key": "",
             "s3_edi_key":       "",
             "processed_date":   "",
+            
+            # ── Vendor fields filled by send_to_vendor ────  ← ADD THESE
+            "vendor_sent":      "N",
+            "vendor_sent_date": "",
+            "s3_vendor_key":    "",
         }
 
         table.put_item(Item=item)
