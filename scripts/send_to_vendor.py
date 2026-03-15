@@ -134,6 +134,22 @@ def copy_to_vendor(s3_key: str, vendor_folder: str, file_name: str) -> str:
     log(f"Copied → s3://{VENDOR_BUCKET}/{dest_key}")
     return dest_key
 
+def archive_edi_file(s3_key: str, file_name: str) -> str:
+    """Move EDI file from outbound/ → edi/archive/"""
+    archive_key = f"edi/archive/{file_name}"
+
+    # Copy to archive
+    s3.copy_object(
+        Bucket     = S3_BUCKET,
+        CopySource = {"Bucket": S3_BUCKET, "Key": s3_key},
+        Key        = archive_key
+    )
+
+    # Delete from outbound
+    s3.delete_object(Bucket=S3_BUCKET, Key=s3_key)
+
+    log(f"Archived    → s3://{S3_BUCKET}/{archive_key}")
+    return archive_key
 
 # ─────────────────────────────────────────────────────────
 # Update DynamoDB — mark vendor_sent = Y
@@ -191,8 +207,9 @@ def process_file(s3_key: str, partners: dict) -> bool:
         # Copy to vendor inbox
         vendor_key = copy_to_vendor(s3_key, vendor_folder, file_name)
 
-        # Store outbound path as archive reference
-        archive_key = s3_key
+        # Move the file to archive reference
+        archive_key = archive_edi_file(s3_key, file_name)
+
         
         # Update DynamoDB
         mark_vendor_sent(file_name, vendor_key, archive_key)
