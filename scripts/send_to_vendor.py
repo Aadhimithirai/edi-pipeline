@@ -138,7 +138,7 @@ def copy_to_vendor(s3_key: str, vendor_folder: str, file_name: str) -> str:
 # ─────────────────────────────────────────────────────────
 # Update DynamoDB — mark vendor_sent = Y
 # ─────────────────────────────────────────────────────────
-def mark_vendor_sent(file_name: str, vendor_key: str):
+def mark_vendor_sent(file_name: str, vendor_key: str, archive_key: str):
     """Update EDI jobs table — vendor_sent = Y."""
     txt_name = file_name.replace(".edi", ".txt")
 
